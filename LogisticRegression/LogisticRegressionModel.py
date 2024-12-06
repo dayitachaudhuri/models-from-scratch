@@ -11,41 +11,36 @@ class LogisticRegression(LinearModel):
     """
 
     def fit(self, x, y):
-        """Run Newton's Method to minimize J(theta) for logistic regression.
-
-        Args:
-            x: Training example inputs. Shape (m, n).
-            y: Training example labels. Shape (m,).
-        """    
+        """Fit the logistic regression model to training data."""
+        
         m = x.shape[0] # Number of examples
         n = x.shape[1] # Number of features
         
         def sigmoid(theta):
             return 1 / (1 + np.exp(-x @ theta)) # Equivalent to 1 / (1 + e^(- theta.T @ x))
         
+        def hessian(theta, h):
+            R = np.diag((h * (1 - h)))
+            return (1 / m) * (x.T @ R @ x)
+        
+        def gradient(h):
+            return (1 / m) * (x.T @ (h - y))
+        
         if self.theta is None:
-            self.theta = np.zeros((n,1))
+            self.theta = np.zeros(n)
                 
         for _ in range(self.max_iter):
             h = sigmoid(self.theta)
-            gradient = (1 / m) * (x.T @ (y - h))
-            # Hessian
-            R = np.diag((h * (1 - h)))
-            hessian = (1 / m) * (x.T @ R @ x)
+            J = gradient(h)
+            H = hessian(self.theta, h)
             # Newton's update
-            theta_update = np.linalg.inv(hessian) @ gradient
+            theta_update = np.linalg.inv(H) @ J
             self.theta -= theta_update
             if np.linalg.norm(theta_update, ord=1) < self.eps:
                 break
-\
+
     def predict(self, x):
-        """Make a prediction given new inputs x.
-
-        Args:
-            x: Inputs of shape (m, n).
-
-        Returns:
-            Outputs of shape (m,).
-        """
+        """Make a prediction given new inputs x. """
+        
         probabilities = 1 / (1 + np.exp(-x @ self.theta))
         return (probabilities >= 0.5).astype(int)
